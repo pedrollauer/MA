@@ -39,7 +39,7 @@ app.get('/new', (req, res) => {
   const finalCode = `FISIO-${randomPart}`;
 
   res.status(200).json({ 
-    message: 'You have generated a new code.',
+    message: 'Código:',
     code: finalCode 
   });
 });
