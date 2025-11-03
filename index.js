@@ -30,21 +30,29 @@ app.get('/consu', (req, res) => {
   res.status(200).json({ message: 'Welcome to the /consu endpoint.' });
 });
 
-app.get('/new', (req, res) => {
+app.get('/new', async (req, res) => {
   console.log('Received request for /new');
   
-  // Generate the 5-character random part
   const randomPart = generateRandomCode(5);
-  // Combine with the prefix
   const finalCode = `FISIO-${randomPart}`;
 
-  res.status(200).json({ 
-    message: 'Código:',
-    code: finalCode 
-  });
-});
+  try {
+    const sql = 'INSERT INTO codigos (codigo) VALUES ($1) RETURNING *';
+    const values = [finalCode];
+    
+    // Executa a query
+    const result = await pool.query(sql, values);
 
-// --- Start the Server ---
-app.listen(port, () => {
-  console.log(`Server running successfully on http://localhost:${port}`);
+    res.status(201).json({
+      message: 'Código criado e salvo com sucesso:',
+      data: result.rows[0]
+    });
+
+  } catch (error) {
+    console.error('Erro ao salvar no banco de dados:', error);
+    res.status(500).json({
+      error: 'Erro interno do servidor ao salvar o código.',
+      details: error.message
+    });
+  }
 });
