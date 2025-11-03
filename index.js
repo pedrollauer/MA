@@ -52,10 +52,66 @@ function generateRandomCode(length) {
 
 // --- Define Endpoints ---
 
-// 1. /reg
 app.get('/reg', (req, res) => {
-  res.status(200).json({ message: 'This is the /reg endpoint.' });
+  console.log('Received request for /reg');
+  
+  res.send(`
+    <!DOCTYPE html>
+    <html lang="pt-br">
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Registrar Código</title>
+      <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; display: grid; place-items: center; min-height: 90vh; background-color: #f8f9fa; color: #333; }
+        form { background: #ffffff; border: 1px solid #dee2e6; padding: 30px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+        h2 { margin-top: 0; }
+        input { font-size: 1.1rem; padding: 10px; margin-right: 10px; border: 1px solid #ced4da; border-radius: 4px; width: 200px; }
+        button { font-size: 1.1rem; padding: 10px 18px; background-color: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; transition: background-color 0.2s; }
+        button:hover { background-color: #0056b3; }
+      </style>
+    </head>
+    <body>
+      <form action="/usar-codigo" method="GET">
+        <h2>Registrar Uso do Código</h2>
+        <label for="codigo-input">Código:</label>
+        <input type="text" id="codigo-input" name="codigo" placeholder="FISIO-XXXXX" required>
+        <button type="submit">Usar Código</button>
+      </form>
+    </body>
+    </html>
+  `);
 });
+
+// NOVO ENDPOINT: /usar-codigo (para processar o formulário do /reg)
+app.get('/usar-codigo', async (req, res) => {
+  console.log('Received request for /usar-codigo');
+  
+  const { codigo } = req.query;
+
+  if (!codigo) {
+    return res.status(400).send('<h1>Erro:</h1><p>Nenhum código foi fornecido.</p><a href="/reg">Tentar novamente</a>');
+  }
+
+  try {
+    const upperCaseCodigo = codigo.toUpperCase();
+    const sql = 'UPDATE codigos SET used = 1 WHERE codigo = $1 AND used = 0 RETURNING *';
+    const values = [upperCaseCodigo];
+
+    const result = await pool.query(sql, values);
+
+    if (result.rowCount > 0) {
+      res.send(`<h1>Sucesso!</h1><p>O código "${upperCaseCodigo}" foi marcado como usado.</p><a href="/reg">Registrar outro</a>`);
+    } else {
+      res.status(404).send(`<h1>Erro</h1><p>Código "${upperCaseCodigo}" não encontrado ou já foi utilizado.</p><a href="/reg">Tentar novamente</a>`);
+    }
+
+  } catch (error) {
+    console.error('Erro ao atualizar o código:', error);
+    res.status(500).send('<h1>Erro Interno</h1><p>Ocorreu um problema no servidor.</p>');
+  }
+});
+
 
 // 2. /consu
 app.get('/consu', async (req, res) => {
