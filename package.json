@@ -3,12 +3,13 @@
   "version": "1.0.0",
   "description": "A simple Express server with three endpoints.",
   "main": "index.js",
-  "type": "module",
   "scripts": {
     "start": "node index.js"
   },
   "dependencies": {
-    "express": "^4.18.2",
+    "dotenv": "^17.2.3",
+    "express": "^4.21.2",
+    "jimp": "^0.22.10",
     "pg": "^8.16.3"
   }
 }
